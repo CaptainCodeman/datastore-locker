@@ -54,7 +54,7 @@ func (l *Locker) Schedule(c context.Context, key *datastore.Key, entity Lockable
 	task := l.NewTask(key, entity, path, params)
 
 	// Use same queue that we started on if defined, otherwise use configured default
-	queue, ok := queueFromContext(c)
+	queue, ok := QueueFromContext(c)
 	if !ok {
 		queue = l.DefaultQueue
 	}

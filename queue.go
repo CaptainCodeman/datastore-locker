@@ -15,8 +15,8 @@ func WithQueue(c context.Context, queue string) context.Context {
 	return context.WithValue(c, queueKey, queue)
 }
 
-// retrieve the per-request queue from context
-func queueFromContext(c context.Context) (string, bool) {
+// QueueFromContext retrieves the per-request queue from context
+func QueueFromContext(c context.Context) (string, bool) {
 	queue, ok := c.Value(queueKey).(string)
 	return queue, ok
 }
