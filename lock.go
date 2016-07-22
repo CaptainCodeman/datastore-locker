@@ -42,9 +42,22 @@ type (
 	// embedded and gives us a way to access it
 	Lockable interface {
 		getLock() *Lock
+
+		// Complete marks the current lock as complete
+		Complete()
 	}
 )
 
 func (l *Lock) getLock() *Lock {
 	return l
+}
+
+// Complete sets the lock properties to indicate it is complete
+// as a safeguard in-case the last task is repeated. It should
+// be called if writing the entity status within the app.
+func (l *Lock) Complete() {
+	l.Timestamp = getTime()
+	l.RequestID = ""
+	l.Retries = 0
+	l.Sequence = -1
 }

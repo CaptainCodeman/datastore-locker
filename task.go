@@ -161,10 +161,7 @@ func (l *Locker) Aquire(c context.Context, key *datastore.Key, entity Lockable, 
 func (l *Locker) Complete(c context.Context, key *datastore.Key, entity Lockable) error {
 	// prepare the lock entries
 	lock := entity.getLock()
-	lock.Timestamp = getTime()
-	lock.RequestID = ""
-	lock.Retries = 0
-	lock.Sequence++
+	lock.Complete()
 
 	// TODO: do we need to re-fetch the entity to guarantee freshness?
 	err := storage.RunInTransaction(c, func(tc context.Context) error {
