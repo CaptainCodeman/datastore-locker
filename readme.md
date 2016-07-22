@@ -88,7 +88,7 @@ Handle the task execution:
     }
 
     // the handler for the task will be passed the appengine context, request, datastore key and entity
-    func foohandler(c context.Context, r *http.Request, key *datastore.Key, entity interface{}) error {
+    func foohandler(c context.Context, r *http.Request, key *datastore.Key, entity locker.Lockable) error {
       foo := entity.(*Foo)
 
       switch foo.Sequence {

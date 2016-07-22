@@ -54,7 +54,7 @@ func counterFactory() locker.Lockable {
 	return new(Counter)
 }
 
-func counterHandler(c context.Context, r *http.Request, key *datastore.Key, entity interface{}) error {
+func counterHandler(c context.Context, r *http.Request, key *datastore.Key, entity locker.Lockable) error {
 	counter := entity.(*Counter)
 	log.Debugf(c, "process: %d", counter.Sequence)
 

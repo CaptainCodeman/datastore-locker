@@ -16,7 +16,7 @@ import (
 )
 
 // Parse returns the namespace, datatore.Key, sequence and queue name from a task request
-func Parse(c context.Context, r *http.Request) (*datastore.Key, int, error) {
+func (l *Locker) Parse(c context.Context, r *http.Request) (*datastore.Key, int, error) {
 	key := new(datastore.Key)
 	if err := key.UnmarshalJSON([]byte(r.Header.Get("X-Lock-Key"))); err != nil {
 		return nil, 0, err
@@ -53,6 +53,12 @@ func (l *Locker) NewTask(key *datastore.Key, entity Lockable, path string, param
 func (l *Locker) Schedule(c context.Context, key *datastore.Key, entity Lockable, path string, params url.Values) error {
 	task := l.NewTask(key, entity, path, params)
 
+	// Use same queue that we started on if defined, otherwise use configured default
+	queue, ok := queueFromContext(c)
+	if !ok {
+		queue = l.DefaultQueue
+	}
+
 	// write the datastore entity and schedule the task within a
 	// transaction to guarantees that both happen and the entity
 	// will be committed to the datastore when the task executes but
@@ -61,7 +67,7 @@ func (l *Locker) Schedule(c context.Context, key *datastore.Key, entity Lockable
 		if _, err := storage.Put(tc, key, entity); err != nil {
 			return err
 		}
-		if _, err := taskqueue.Add(tc, task, l.Queue); err != nil {
+		if _, err := taskqueue.Add(tc, task, queue); err != nil {
 			return err
 		}
 		return nil
@@ -70,11 +76,11 @@ func (l *Locker) Schedule(c context.Context, key *datastore.Key, entity Lockable
 	return err
 }
 
-// GetLock attempts to get and lock an entity with the given identifier
+// Aquire attempts to get and lock an entity with the given identifier
 // If successful it will write a new lock entity to the datastore
 // and return nil, otherwise it will return an error to indicate
 // the reason for failure.
-func (l *Locker) GetLock(c context.Context, key *datastore.Key, entity Lockable, sequence int) error {
+func (l *Locker) Aquire(c context.Context, key *datastore.Key, entity Lockable, sequence int) error {
 	requestID := appengine.RequestID(c)
 	lock := new(Lock)
 	success := false

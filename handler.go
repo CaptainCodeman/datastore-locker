@@ -10,12 +10,15 @@ import (
 )
 
 type (
-	entityFactory func() Lockable
-	lockHandler   func(c context.Context, r *http.Request, key *datastore.Key, entity interface{}) error
+	// EntityFactory creates a new entity instance for use by the lock handler
+	EntityFactory func() Lockable
+
+	// LockHandler is the signature of the lock task handler
+	LockHandler func(c context.Context, r *http.Request, key *datastore.Key, entity Lockable) error
 )
 
 // Handle wraps a task handler with task / lock processing
-func (l *Locker) Handle(handler lockHandler, factory entityFactory) http.Handler {
+func (l *Locker) Handle(handler LockHandler, factory EntityFactory) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		c := appengine.NewContext(r)
 
@@ -26,7 +29,11 @@ func (l *Locker) Handle(handler lockHandler, factory entityFactory) http.Handler
 			return
 		}
 
-		key, seq, err := Parse(c, r)
+		// use the same queue name for any tasks scheduled by this handler
+		queue := r.Header.Get("X-Appengine-QueueName")
+		c = WithQueue(c, queue)
+
+		key, seq, err := l.Parse(c, r)
 		if err != nil {
 			log.Warningf(c, "parse failed: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -34,7 +41,7 @@ func (l *Locker) Handle(handler lockHandler, factory entityFactory) http.Handler
 		}
 
 		entity := factory()
-		err = l.GetLock(c, key, entity, seq)
+		err = l.Aquire(c, key, entity, seq)
 		if err != nil {
 			log.Warningf(c, "lock failed: %v", err)
 			// if we have a lock error, it provides the http response to use

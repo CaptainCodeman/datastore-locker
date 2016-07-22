@@ -32,9 +32,9 @@ type (
 		// the system
 		AlertOnOverwrite bool
 
-		// Queue is the name of the task-queue to schedule tasks on.
+		// DefaultQueue is the name of the task-queue to schedule tasks on.
 		// The default (empty string) is to use the default task queue.
-		Queue string
+		DefaultQueue string
 	}
 )
 
@@ -96,10 +96,10 @@ func AlertOnOverwrite(l *Locker) error {
 	return nil
 }
 
-// Queue sets the config setting for a locker
-func Queue(queue string) func(*Locker) error {
+// DefaultQueue sets the config setting for a locker
+func DefaultQueue(queue string) func(*Locker) error {
 	return func(l *Locker) error {
-		l.Queue = queue
+		l.DefaultQueue = queue
 		return nil
 	}
 }

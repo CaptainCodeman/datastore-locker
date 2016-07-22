@@ -44,7 +44,7 @@ func TestGetLockAvailable(t *testing.T) {
 		return n
 	}
 	l, _ := NewLocker()
-	err := l.GetLock(c, k, f, 1)
+	err := l.Aquire(c, k, f, 1)
 	if err != nil {
 		t.Errorf("failed to lock %v", err)
 	}
@@ -83,7 +83,7 @@ func TestGetLockAlreadyLocked(t *testing.T) {
 	}, nil)
 
 	l, _ := NewLocker()
-	err := l.GetLock(c, k, f, 1)
+	err := l.Aquire(c, k, f, 1)
 	if err != ErrLockFailed {
 		t.Errorf("expected failed lock, got %v", err)
 	}
