@@ -13,12 +13,12 @@ type (
 	// EntityFactory creates a new entity instance for use by the lock handler
 	EntityFactory func() Lockable
 
-	// LockHandler is the signature of the lock task handler
-	LockHandler func(c context.Context, r *http.Request, key *datastore.Key, entity Lockable) error
+	// TaskHandler is the signature of the task handler
+	TaskHandler func(c context.Context, r *http.Request, key *datastore.Key, entity Lockable) error
 )
 
 // Handle wraps a task handler with task / lock processing
-func (l *Locker) Handle(handler LockHandler, factory EntityFactory) http.Handler {
+func (l *Locker) Handle(handler TaskHandler, factory EntityFactory) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		c := appengine.NewContext(r)
 
