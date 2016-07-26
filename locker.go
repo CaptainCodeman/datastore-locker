@@ -35,11 +35,20 @@ type (
 		// DefaultQueue is the name of the task-queue to schedule tasks on.
 		// The default (empty string) is to use the default task queue.
 		DefaultQueue string
+
+		// Host is the name of the host to schedule tasks to run on.
+		// This is better controlled using the target property of the taskqueue
+		// but when running in the dev environment that doesn't work so this
+		// provides a way to override it
+		Host string
 	}
+
+	// Option is the signature for locker configuration options
+	Option func(*Locker) error
 )
 
 // NewLocker creates a new configured Locker instance
-func NewLocker(options ...func(*Locker) error) (*Locker, error) {
+func NewLocker(options ...Option) (*Locker, error) {
 	locker := &Locker{
 		LeaseDuration: time.Duration(1) * time.Minute,
 		LeaseTimeout:  time.Duration(10)*time.Minute + time.Duration(30)*time.Second,
@@ -100,6 +109,14 @@ func AlertOnOverwrite(l *Locker) error {
 func DefaultQueue(queue string) func(*Locker) error {
 	return func(l *Locker) error {
 		l.DefaultQueue = queue
+		return nil
+	}
+}
+
+// Host sets the config setting for a locker
+func Host(host string) func(*Locker) error {
+	return func(l *Locker) error {
+		l.Host = host
 		return nil
 	}
 }

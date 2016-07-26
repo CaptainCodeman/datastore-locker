@@ -46,6 +46,10 @@ func (l *Locker) NewTask(key *datastore.Key, entity Lockable, path string, param
 	task.Header.Set("X-Lock-Seq", strconv.Itoa(lock.Sequence))
 	task.Header.Set("X-Lock-Key", string(json))
 
+	if l.Host != "" {
+		task.Header.Set("Host", l.Host)
+	}
+
 	return task
 }
 
@@ -64,6 +68,8 @@ func (l *Locker) Schedule(c context.Context, key *datastore.Key, entity Lockable
 	// will be committed to the datastore when the task executes but
 	// the task won't be scheduled if our entity update fails
 	err := storage.RunInTransaction(c, func(tc context.Context) error {
+		// TODO: check if entity already exists and handle accordingly
+		// don't overwrite if already locked for processing
 		if _, err := storage.Put(tc, key, entity); err != nil {
 			return err
 		}
