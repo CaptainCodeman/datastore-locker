@@ -27,13 +27,13 @@ type (
 		Timestamp time.Time `datastore:"lock_ts"`
 
 		// Request is the request id that obtained the current lock
-		RequestID string `datastore:"lock_req"`
+		RequestID string `datastore:"lock_req,noindex"`
 
 		// Sequence is the task sequence number
-		Sequence int `datastore:"lock_seq"`
+		Sequence int `datastore:"lock_seq,noindex"`
 
 		// Retries is the number of retries that have been attempted
-		Retries int `datastore:"lock_try"`
+		Retries int `datastore:"lock_try,noindex"`
 	}
 
 	// Lockable is the interface that lockable entities must implement
