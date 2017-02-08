@@ -10,7 +10,7 @@ import (
 )
 
 func alertAdmins(c context.Context, key *datastore.Key, entity Lockable, reason string) error {
-	sender := "locker@" + appengine.AppID(c) + ".appspot.com"
+	sender := "locker@" + appengine.AppID(c) + ".appspotmail.com"
 
 	msg := &mail.Message{
 		Sender:  sender,
