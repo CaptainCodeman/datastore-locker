@@ -153,7 +153,7 @@ func (l *Locker) Aquire(c context.Context, key *datastore.Key, entity Lockable, 
 	// if it has then we will be overwriting the lock. It's possible that the
 	// log entry is missing or we simply don't have access to them (managed VM)
 	// so the lease timeout is a failsafe to catch extreme undetectable failures
-	if lock.Timestamp.Add(l.LeaseTimeout).Before(getTime()) && l.previousRequestEnded(c, lock.RequestID) {
+	if lock.Timestamp.Add(l.LeaseTimeout).Before(getTime()) || l.previousRequestEnded(c, lock.RequestID) {
 		if err := l.overwriteLock(c, key, entity, requestID); err == nil {
 			// success (at least we grabbed the lock)
 			return nil
