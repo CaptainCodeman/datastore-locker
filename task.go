@@ -67,10 +67,10 @@ func (l *Locker) Schedule(c context.Context, key *datastore.Key, entity Lockable
 	// transaction to guarantees that both happen and the entity
 	// will be committed to the datastore when the task executes but
 	// the task won't be scheduled if our entity update fails
-	err := storage.RunInTransaction(c, func(tc context.Context) error {
+	err := datastore.RunInTransaction(c, func(tc context.Context) error {
 		// TODO: check if entity already exists and handle accordingly
 		// don't overwrite if already locked for processing
-		if _, err := storage.Put(tc, key, entity); err != nil {
+		if _, err := datastore.Put(tc, key, entity); err != nil {
 			return err
 		}
 		if _, err := taskqueue.Add(tc, task, queue); err != nil {
@@ -94,11 +94,11 @@ func (l *Locker) Aquire(c context.Context, key *datastore.Key, entity Lockable, 
 	// we need to run in a transaction for consistency guarantees
 	// in case two tasks start at the exact same moment and each
 	// of them sees no lock in place
-	err := storage.RunInTransaction(c, func(tc context.Context) error {
+	err := datastore.RunInTransaction(c, func(tc context.Context) error {
 		// reset flag here in case of transaction retries
 		success = false
 
-		if err := storage.Get(tc, key, entity); err != nil {
+		if err := datastore.Get(tc, key, entity); err != nil {
 			return err
 		}
 
@@ -108,7 +108,7 @@ func (l *Locker) Aquire(c context.Context, key *datastore.Key, entity Lockable, 
 		if lock.RequestID == "" && lock.Sequence == sequence {
 			lock.Timestamp = getTime()
 			lock.RequestID = requestID
-			if _, err := storage.Put(tc, key, entity); err != nil {
+			if _, err := datastore.Put(tc, key, entity); err != nil {
 				return err
 			}
 			success = true
@@ -170,8 +170,8 @@ func (l *Locker) Complete(c context.Context, key *datastore.Key, entity Lockable
 	lock.Complete()
 
 	// TODO: do we need to re-fetch the entity to guarantee freshness?
-	err := storage.RunInTransaction(c, func(tc context.Context) error {
-		if _, err := storage.Put(tc, key, entity); err != nil {
+	err := datastore.RunInTransaction(c, func(tc context.Context) error {
+		if _, err := datastore.Put(tc, key, entity); err != nil {
 			return err
 		}
 		return nil
@@ -193,8 +193,8 @@ func (l *Locker) clearLock(c context.Context, key *datastore.Key, entity Lockabl
 		}
 		return ErrTaskFailed
 	}
-	err := storage.RunInTransaction(c, func(tc context.Context) error {
-		if err := storage.Get(tc, key, entity); err != nil {
+	err := datastore.RunInTransaction(c, func(tc context.Context) error {
+		if err := datastore.Get(tc, key, entity); err != nil {
 			log.Debugf(c, "clearLock get %v", err)
 			return err
 		}
@@ -202,7 +202,7 @@ func (l *Locker) clearLock(c context.Context, key *datastore.Key, entity Lockabl
 		lock.Timestamp = getTime()
 		lock.RequestID = ""
 		lock.Retries++
-		if _, err := storage.Put(tc, key, entity); err != nil {
+		if _, err := datastore.Put(tc, key, entity); err != nil {
 			log.Debugf(c, "clearLock put %v", err)
 			return err
 		}
@@ -219,14 +219,14 @@ func (l *Locker) overwriteLock(c context.Context, key *datastore.Key, entity Loc
 			log.Errorf(c, "failed to send alert email for lock overwrite: %v", err)
 		}
 	}
-	err := storage.RunInTransaction(c, func(tc context.Context) error {
-		if err := storage.Get(tc, key, entity); err != nil {
+	err := datastore.RunInTransaction(c, func(tc context.Context) error {
+		if err := datastore.Get(tc, key, entity); err != nil {
 			return err
 		}
 		lock := entity.getLock()
 		lock.Timestamp = getTime()
 		lock.RequestID = requestID
-		if _, err := storage.Put(tc, key, entity); err != nil {
+		if _, err := datastore.Put(tc, key, entity); err != nil {
 			return err
 		}
 		return nil
